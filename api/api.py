@@ -32,6 +32,11 @@ def update_article(id):
     db_list[id] = post
     return jsonify(db_list)
 
+@app.route('/article/delete/<int:id>', methods=['DELETE'])
+def delete_article(id):
+    db_list.pop(id)
+    return jsonify(db_list)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
