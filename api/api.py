@@ -1,41 +1,100 @@
 from flask import Flask, jsonify, request
+import pymysql
 
 app = Flask(__name__)
+app.config['JSON_SQRT_KEYS'] = False
 
 
-db_list = [
-    {'title': 'title 1', 'body': 'body 1'},
-    {'title': 'title 2', 'body': 'body 2'},
-    {'title': 'title 3', 'body': 'body 3'},
-    {'title': 'title 4', 'body': 'body 4'},
-    {'title': 'title 5', 'body': 'body 5'},
-]
+def getConnection():
+    return pymysql.connect(
+        host='localhost',
+        user='root',
+        password='Kei19971018?',
+        db='shop_app',
+        cursorclass=pymysql.cursors.DictCursor,
+    )
 
 
-@app.route('/articles', methods=['GET'])
-def get_articles():
-    return jsonify(db_list)
+@app.route('/items', methods=['GET'])
+def get_items():
+    connection = getConnection()
+    try:
+        with connection.cursor() as cursor:
+            sql = 'SELECT * FROM items'
+            cursor.execute(sql)
+            items = cursor.fetchall()
+    finally:
+        connection.close()
 
-@app.route('/article/<int:id>', methods=['GET'])
-def get_article(id):
-    return jsonify(db_list[id])
+    return jsonify({
+        'status': 'OK',
+        'items': items
+    })
 
-@app.route('/article/add', methods=['POST'])
-def create_article():
-    post = request.json
-    db_list.append(post)
-    return jsonify(db_list[-1])
+@app.route('/item/<int:id>', methods=['GET'])
+def get_item(id):
+    connection = getConnection()
+    try:
+        with connection.cursor() as cursor:
+            sql = 'SELECT * FROM items WHERE id = %s'
+            cursor.execute(sql, id)
+            item = cursor.fetchone()
+    finally:
+        connection.close()
 
-@app.route('/article/update/<int:id>', methods=['PUT'])
-def update_article(id):
-    post = request.json
-    db_list[id] = post
-    return jsonify(db_list)
+    return jsonify({
+        'status': 'OK',
+        'items': item
+    })
 
-@app.route('/article/delete/<int:id>', methods=['DELETE'])
-def delete_article(id):
-    db_list.pop(id)
-    return jsonify(db_list)
+@app.route('/item/add', methods=['POST'])
+def create_item():
+    item = request.json
+    item_cost = item.get('cost')
+    item_name = item.get('name')
+    item_stock = item.get('stock')
+
+    connection = getConnection()
+    try:
+        with connection.cursor() as cursor:
+            sql = 'INSERT INTO items (name, cost, stock) VALUES (%s, %s, %s)'
+            cursor.execute(sql, (item_name, item_cost, item_stock))
+    finally:
+        connection.commit()
+        connection.close()
+
+    return 'success'
+
+@app.route('/item/update/<int:id>', methods=['PUT'])
+def update_item(id):
+    item = request.json
+    item_cost = item.get('cost')
+    item_name = item.get('name')
+    item_stock = item.get('stock')
+
+    connection = getConnection()
+    try:
+        with connection.cursor() as cursor:
+            sql = 'UPDATE items SET name = %s, cost = %s, stock = %s WHERE id = %s'
+            cursor.execute(sql, (item_name, item_cost, item_stock, id))
+    finally:
+        connection.commit()
+        connection.close()
+
+    return 'success'
+
+@app.route('/item/delete/<int:id>', methods=['DELETE'])
+def delete_item(id):
+    connection = getConnection()
+    try:
+        with connection.cursor() as cursor:
+            sql = 'DELETE FROM items WHERE id = %s'
+            cursor.execute(sql, id)
+    finally:
+        connection.commit()
+        connection.close()
+
+    return 'success'
 
 
 if __name__ == '__main__':
