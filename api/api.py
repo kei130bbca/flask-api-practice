@@ -20,6 +20,11 @@ def get_articles():
 def get_article(id):
     return jsonify(db_list[id])
 
+@app.route('/article/add', methods=['POST'])
+def create_article():
+    post = request.json
+    db_list.append(post)
+    return jsonify(db_list)
 
 if __name__ == '__main__':
     app.run(debug=True)
