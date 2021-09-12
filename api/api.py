@@ -24,7 +24,14 @@ def get_article(id):
 def create_article():
     post = request.json
     db_list.append(post)
+    return jsonify(db_list[-1])
+
+@app.route('/article/update/<int:id>', methods=['PUT'])
+def update_article(id):
+    post = request.json
+    db_list[id] = post
     return jsonify(db_list)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
